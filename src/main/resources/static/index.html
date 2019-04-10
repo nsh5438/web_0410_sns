@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGSW_SNS</title>
+    <script
+            src="http://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <header>
+        <H1>DGSW_SNS</H1>
+    </header>
+
+    <aside>
+        <h3 id="username">이름</h3>
+        <h3 id="useremail">이메일</h3>
+        <h3 id="registerdate">가입기간</h3>
+        <button id="loginbtn" onclick="OpenLogin()">로그인</button>
+    </aside>
+
+    <section>
+        <div><button onclick="NewWrite()">새 글 쓰기</button></div>
+        <div id="contents-list"></div>
+    </section>
+
+    <div id="container">
+        <div id="login-content">
+            <div id="login-display">
+                <div style="margin: 30px 0">로그인</div>
+                <div ><input id="userid" placeholder="아이디"></div>
+                <div><input id="password" placeholder="패스워드" type="password"></div>
+                <div style="margin: 30px 0">
+                    <button onclick="Login()">확인</button>
+                    <button onclick="CloseLogin()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="container_new">
+        <div id="write-content">
+            <div id="write-display">
+                <div style="margin: 30px 0">새 글 추가</div>
+                <div ><input type="file" id="uploadFile"></div>
+                <div><input id="explain" placeholder="설명"></div>
+                <div style="margin: 30px 0">
+                    <button onclick="AddWrite()">확인</button>
+                    <button onclick="CloseWrite()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        body{
+            margin: 0;
+        }
+
+        header{
+            height: 100px;
+            width: 100vw;
+            /*background-color: aqua;*/
+        }
+
+        aside{
+            position: absolute;
+            top: 100px;
+            right: 0;
+            width: 200px;
+            bottom: 0;
+            height: 100%;
+            background-color: beige ;
+        }
+
+        h3{
+            text-align: center;
+        }
+
+        section{
+            position: absolute;
+            top: 100px;
+            left: 0;
+            right: 200px;
+            /*background-color: blue;*/
+            bottom: 0;
+        }
+        #login-content{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            background-color:#00000080;
+        }
+
+        #login-display{
+            text-align:center;
+            background-color: antiquewhite;
+            padding: 0 30px;
+        }
+
+        #container{
+            display: none;
+        }
+
+        #write-content{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            background-color:#00000080;
+        }
+
+        #write-display{
+            text-align:center;
+            background-color: white;
+            padding: 0 30px;
+        }
+
+        #container_new{
+            display: none;
+        }
+
+        #loginbtn{
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+        }
+    </style>
+
+    <script>
+        let user = null;
+        function NewWrite(){
+            if (user == null){
+                OpenLogin();
+                return;
+            }
+            $("#container_new").show(100);
+        }
+
+        function OpenLogin() {
+            $("#container").show(100);
+        }
+
+        function CloseLogin() {
+            $("#container").hide(100);
+        }
+
+        function CloseWrite(){
+            $("#container_new").hide(100);
+        }
+
+        async function Login() {
+            let id = $("#userid").val().trim();
+            let password = $("#password").val().trim();
+
+            let json = {userid:id, password:password};
+
+            let response = await $.post({
+                url:'/login',
+                contentType: 'application/json',
+                dataType: 'json',
+                data:JSON.stringify(json)
+            });
+
+            if(response == null){
+                alert("로그인 실패");
+                return;
+            }
+
+            user = response;
+
+            alert(user.username + "님 환영합니다.");
+            $("#username").text(user.username + "님");
+            $("#useremail").text(user.email);
+            $("#registerdate").text(user.created);
+            $("#container").hide(100);
+            $("#loginbtn").hide();
+            console.log(response);
+        }
+
+        async function AddWrite(){
+            try{
+                let fileInput = $("#uploadFile")[0].files[0];
+                let explain = $("#explain").val().trim();
+                let formData = new FormData();
+                formData.append("uploadFile",fileInput);
+                let response = await $.ajax({
+                    type:"post",
+                    url:"/attachment",
+                    data:formData,
+                    contentType: false,
+                    processData: false
+                });
+
+                let data = {
+                    userid:user.userid,
+                    explanation:explain,
+                    savepath : response.savepath ,
+                    ordinaryname : response.originalname };
+
+                let responses = await $.ajax({
+                    url: '/addcmt',
+                    type:'post',
+                    contentType:'application/json',
+                    dataType:'json',
+                    data:JSON.stringify(data)
+                });
+
+                let upload = await $.get('/download/' + responses.id);
+
+                addLine(responses);
+
+                // $("#img_"+responses.id).attr("src","http://localhost:8080/download/"+ responses.id);
+                CloseWrite();
+
+
+
+                console.log(JSON.stringify(responses));
+            }catch (e) {
+                console.log(JSON.stringify(e));
+            }
+        }
+
+        async function ContentList(){
+
+            try{
+                let response = await $.get('/list');
+                // $("#comments-list").html(JSON.stringify(response));
+                response.sort();
+                for(let i = 0 ; i<response.length;i++){
+                    let contents = response[i];
+                    console.log(contents.created);
+                    addLine(contents);
+                }
+            }catch (e) {
+                $("#contents-list").html(JSON.stringify(e));
+            }
+        }
+
+
+        let content = null;
+        async function EditComment(button,id) {
+            if(user == null){
+                OpenLogin();
+                return;
+            }
+
+            let line = $(`#line${id}`);
+            if($(button).text() === '수정'){
+                content = line.find('div:nth-child(4)').html();
+                let input = `<input value="${content}">`;
+                line.find('div:nth-child(4)').html(input);
+                line.find('input').focus();
+                $(button).text('확인');
+                $(button).next().text('취소');
+            }else if($(button).text() === '확인') {
+                let response = await $.ajax({
+                    url: '/updatecmt/' + id,
+                    type:'put',
+                    contentType:'application/json',
+                    dataType:'json',
+                    data:JSON.stringify({ explanation : line.find('input').val() })
+                });
+                line.find('div:nth-child(4)').html(response.explanation);
+                $(button).text('수정');
+                $(button).next().text('삭제');
+            }
+
+
+        }
+
+        async function DeleteComment(button,id) {
+            if(user == null){
+                OpenLogin();
+                return;
+            }
+            if($(button).text() === '삭제'){
+                try{
+                    if(confirm("삭제하시겠습니까?") === true){
+                        let response = await $.ajax({
+                            url: '/deletecmt/' + id,
+                            type:'delete'
+                        });
+                        if(response === true){
+                            $(`#line${id}`).remove();
+                        }else{
+                            alert("삭제실패");
+                        }
+                    }
+                }catch (e) {
+                    console.log(JSON.stringify(e));
+                }
+            }else if($(button).text() === '취소'){
+                let line = $(`#line${id}`);
+                line.find('div:nth-child(4)').html(content);
+                $(button).text('삭제');
+                $(button).prev().text('수정');
+            }
+        }
+
+        function addLine(response) {
+            let upload = $.get('/download/' + response.id);
+            // response.reverse();
+            $("#contents-list").prepend(
+                `<div id="line${response.id}" style="border-bottom: 1px solid silver;">
+                        <img style="display: block;" id="img_${response.id}" width="500px" height="300px" src="http://localhost:8080/download/${response.id}" alt="">
+                        <div style="width: 150px; float: left;">${response.username}</div>
+                        <div style="width: 500px;">${response.created}</div>
+                        <div style="width: 350px;">${response.explanation}</div>
+                        <div>
+                            <button onclick="EditComment(this,${response.id})">수정</button>
+                            <button onclick="DeleteComment(this,${response.id})">삭제</button>
+                        </div>
+                      </div>`
+            );
+        }
+
+        ContentList();
+    </script>
+</body>
+</html>
