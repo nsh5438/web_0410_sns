@@ -54,6 +54,22 @@
         </div>
     </div>
 
+
+    <div id="container_edit">
+        <div id="edit-content">
+            <div id="edit-display">
+                <div style="margin: 30px 0">글 수정</div>
+                <div ><input type="file" id="editFile"></div>
+                <div><input id="editexplain" placeholder="설명"></div>
+                <div style="margin: 30px 0">
+                    <button onclick="EditComment()">수정</button>
+                    <button onclick="CloseEdit()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <style>
         body{
             margin: 0;
@@ -127,6 +143,28 @@
             padding: 0 30px;
         }
 
+        #container_edit{
+            display: none;
+        }
+
+        #edit-content{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            background-color:#00000080;
+        }
+
+        #edit-display{
+            text-align:center;
+            background-color: white;
+            padding: 0 30px;
+        }
+
         #container_new{
             display: none;
         }
@@ -148,12 +186,37 @@
             $("#container_new").show(100);
         }
 
+
+        let idx = null;
+        let content = null;
+        let line = null;
+        function OpenEdit(id) {
+            if(user == null){
+                OpenLogin();
+                return;
+            }
+
+            $("#container_edit").show(100);
+
+            idx = id;
+            line = $(`#line${id}`);
+
+            content = line.find('div:nth-child(4)').html();
+            $("#editexplain").val(content);
+            line.find('input').focus();
+
+        }
+
         function OpenLogin() {
             $("#container").show(100);
         }
 
         function CloseLogin() {
             $("#container").hide(100);
+        }
+
+        function CloseEdit() {
+            $("#container_edit").hide(100);
         }
 
         function CloseWrite(){
@@ -249,34 +312,35 @@
         }
 
 
-        let content = null;
+
         async function EditComment(button,id) {
-            if(user == null){
-                OpenLogin();
-                return;
-            }
 
-            let line = $(`#line${id}`);
-            if($(button).text() === '수정'){
-                content = line.find('div:nth-child(4)').html();
-                let input = `<input value="${content}">`;
-                line.find('div:nth-child(4)').html(input);
-                line.find('input').focus();
-                $(button).text('확인');
-                $(button).next().text('취소');
-            }else if($(button).text() === '확인') {
-                let response = await $.ajax({
-                    url: '/updatecmt/' + id,
-                    type:'put',
-                    contentType:'application/json',
-                    dataType:'json',
-                    data:JSON.stringify({ explanation : line.find('input').val() })
-                });
-                line.find('div:nth-child(4)').html(response.explanation);
-                $(button).text('수정');
-                $(button).next().text('삭제');
-            }
 
+            let fileInput = $("#editFile")[0].files[0];
+            let formData = new FormData();
+            formData.append("uploadFile",fileInput);
+            let response = await $.ajax({
+                type:"post",
+                url:"/attachment",
+                data:formData,
+                contentType: false,
+                processData: false
+            });
+
+            let responses = await  $.ajax({
+                url:'/uploadfile/' + idx,
+                type:'put',
+                contentType:'application/json',
+                dataType:'json',
+                data:JSON.stringify({ explanation : $("#editexplain").val(), savepath : response.savepath , ordinaryname : response.originalname })
+            })
+
+
+            let upload = await $.get('/download/' + responses.id);
+            let time = new Date().getTime();
+            $(`#img_${responses.id}`).attr('src',`http://localhost:8080/download/${responses.id}?time=${time}`)
+            line.find('div:nth-child(4)').html(responses.explanation);
+            CloseEdit();
 
         }
 
@@ -311,6 +375,7 @@
 
         function addLine(response) {
             let upload = $.get('/download/' + response.id);
+
             // response.reverse();
             $("#contents-list").prepend(
                 `<div id="line${response.id}" style="border-bottom: 1px solid silver;">
@@ -319,7 +384,7 @@
                         <div style="width: 500px;">${response.created}</div>
                         <div style="width: 350px;">${response.explanation}</div>
                         <div>
-                            <button onclick="EditComment(this,${response.id})">수정</button>
+                            <button onclick="OpenEdit(${response.id})">수정</button>
                             <button onclick="DeleteComment(this,${response.id})">삭제</button>
                         </div>
                       </div>`

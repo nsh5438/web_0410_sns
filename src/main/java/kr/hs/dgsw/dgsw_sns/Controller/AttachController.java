@@ -40,21 +40,21 @@ public class AttachController {
         }
     }
 
-//    @PutMapping("/uploadfile/{id}")
-//    public User uploadfile(@PathVariable Long id, @RequestBody User user){
-//        try {
-//
-//            return this.userRep.findById(id)
-//                    .map(found->{
-//                        found.setSavepath(Optional.ofNullable(user.getSavepath()).orElse(found.getSavepath()));
-//                        found.setOrdinaryname(Optional.ofNullable(user.getOrdinaryname()).orElse(found.getOrdinaryname()));
-//                        return userRep.save(found);
-//                    })
-//                    .orElse(null);
-//        }catch (Exception e){
-//            return null;
-//        }
-//    }
+    @PutMapping("/uploadfile/{id}")
+    public Content uploadfile(@PathVariable Long id, @RequestBody Content content){
+        try {
+            return this.contentRep.findById(id)
+                    .map(found->{
+                        found.setSavepath(Optional.ofNullable(content.getSavepath()).orElse(found.getSavepath()));
+                        found.setOrdinaryname(Optional.ofNullable(content.getOrdinaryname()).orElse(found.getOrdinaryname()));
+                        found.setExplanation(Optional.ofNullable(content.getExplanation()).orElse(found.getExplanation()));
+                        return contentRep.save(found);
+                    })
+                    .orElse(null);
+        }catch (Exception e){
+            return null;
+        }
+    }
 
     @GetMapping("/download/{id}")
     public void download(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response){
