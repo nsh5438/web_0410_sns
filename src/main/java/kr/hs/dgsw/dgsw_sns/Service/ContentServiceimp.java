@@ -57,7 +57,7 @@ public class ContentServiceimp implements  ContentService {
     public boolean deletecmt(Long id) {
         Optional<Content> comment = this.contentRep.findById(id);
         if (comment.isPresent()) {
-            this.contentRep.delete(comment.get());
+            this.contentRep .delete(comment.get());
             return true;
         } else
             return false;

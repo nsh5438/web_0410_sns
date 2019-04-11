@@ -56,12 +56,22 @@ public class AttachController {
         }
     }
 
-    @GetMapping("/download/{id}")
-    public void download(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response){
-        Optional<Content> found = this.contentRep.findById(id);
+    @GetMapping("/download/{type}/{id}")
+    public void download(@PathVariable String type,@PathVariable Long id, HttpServletRequest request, HttpServletResponse response){
+        String filepath ;
+        String filename;
+
+        if(type.equals("content")){
+            Optional<Content> found = this.contentRep.findById(id);
+            filepath = found.get().getSavepath();
+            filename = found.get().getOrdinaryname();
+        }else{
+            Optional<User> found = this.userRep.findById(id);
+            filepath = found.get().getSavepath();
+            filename = found.get().getOrdinaryname();
+        }
+
         try{
-            String filepath = found.get().getSavepath();
-            String filename = found.get().getOrdinaryname();
             File file =new File(filepath);
             if(file.exists() == false) return;
             String fileType = URLConnection.guessContentTypeFromName(file.getName());

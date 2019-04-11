@@ -15,6 +15,7 @@
     </header>
 
     <aside>
+        <img id="image_user" src="" width="100px" height="100px" alt="">
         <h3 id="username">이름</h3>
         <h3 id="useremail">이메일</h3>
         <h3 id="registerdate">가입기간</h3>
@@ -174,6 +175,11 @@
             right: 10px;
             bottom: 10px;
         }
+
+        #image_user{
+            display: block;
+            margin: 0px auto;
+        }
     </style>
 
     <script>
@@ -246,7 +252,13 @@
             alert(user.username + "님 환영합니다.");
             $("#username").text(user.username + "님");
             $("#useremail").text(user.email);
+            let date = new Date(user.created);
+
             $("#registerdate").text(user.created);
+
+
+            $.get('/download/user/' + user.id);
+            $("#image_user").attr('src',`http://localhost:8080/download/user/${user.id}`);
             $("#container").hide(100);
             $("#loginbtn").hide();
             console.log(response);
@@ -280,7 +292,7 @@
                     data:JSON.stringify(data)
                 });
 
-                let upload = await $.get('/download/' + responses.id);
+                let upload = await $.get('/download/content/' + responses.id);
 
                 addLine(responses);
 
@@ -336,9 +348,9 @@
             })
 
 
-            let upload = await $.get('/download/' + responses.id);
+            let upload = await $.get('/download/content/' + responses.id);
             let time = new Date().getTime();
-            $(`#img_${responses.id}`).attr('src',`http://localhost:8080/download/${responses.id}?time=${time}`)
+            $(`#img_${responses.id}`).attr('src',`http://localhost:8080/download/content/${responses.id}?time=${time}`)
             line.find('div:nth-child(4)').html(responses.explanation);
             CloseEdit();
 
@@ -374,12 +386,12 @@
         }
 
         function addLine(response) {
-            let upload = $.get('/download/' + response.id);
+            let upload = $.get('/download/content/' + response.id);
 
             // response.reverse();
             $("#contents-list").prepend(
                 `<div id="line${response.id}" style="border-bottom: 1px solid silver;">
-                        <img style="display: block;" id="img_${response.id}" width="500px" height="300px" src="http://localhost:8080/download/${response.id}" alt="">
+                        <img style="display: block;" id="img_${response.id}" width="500px" height="300px" src="http://localhost:8080/download/content/${response.id}" alt="">
                         <div style="width: 150px; float: left;">${response.username}</div>
                         <div style="width: 500px;">${response.created}</div>
                         <div style="width: 350px;">${response.explanation}</div>

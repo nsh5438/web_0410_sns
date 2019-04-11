@@ -28,12 +28,14 @@ public class User {
     @CreationTimestamp
     private LocalDateTime created;
 
-    public User(String userid, String password,String username, String email){
-        this.userid = userid;
-        this.password = password;
-        this.username = username;
-        this.email = email;
-    }
 
+    public User(String userid, String username, String password, String email, String savepath, String ordinaryname) {
+        this.userid = userid;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.savepath = savepath;
+        this.ordinaryname = ordinaryname;
+    }
 }
 
