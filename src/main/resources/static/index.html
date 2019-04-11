@@ -252,9 +252,8 @@
             alert(user.username + "님 환영합니다.");
             $("#username").text(user.username + "님");
             $("#useremail").text(user.email);
-            let date = new Date(user.created);
 
-            $("#registerdate").text(user.created);
+            $("#registerdate").text("가입 후 : " + Math.floor((new Date()-new Date(user.created))/(60*1000*60*24)) + "일");
 
 
             $.get('/download/user/' + user.id);
