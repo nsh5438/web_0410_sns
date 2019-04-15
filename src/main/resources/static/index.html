@@ -15,7 +15,7 @@
     </header>
 
     <aside>
-        <img id="image_user" src="" width="100px" height="100px" alt="">
+        <img id="image_user" src="user-profile.jpg" width="100px" height="100px" alt="" style="margin-top: 50px">
         <h3 id="username">이름</h3>
         <h3 id="useremail">이메일</h3>
         <h3 id="registerdate">가입기간</h3>
@@ -88,7 +88,6 @@
             right: 0;
             width: 200px;
             bottom: 0;
-            height: 100%;
             background-color: beige ;
         }
 
@@ -265,23 +264,32 @@
 
         async function AddWrite(){
             try{
-                let fileInput = $("#uploadFile")[0].files[0];
+                let data;
                 let explain = $("#explain").val().trim();
-                let formData = new FormData();
-                formData.append("uploadFile",fileInput);
-                let response = await $.ajax({
-                    type:"post",
-                    url:"/attachment",
-                    data:formData,
-                    contentType: false,
-                    processData: false
-                });
+                if ($('#uploadFile').get(0).files.length === 0) {
+                    data = {
+                        userid:user.userid,
+                        explanation:explain,
+                        savepath : "D:/3102_남가영/IdeaProjects/dgsw_sns/upload/noimage (1).jpg" ,
+                        ordinaryname : "noimage (1).jpg" };
+                }else{
+                    let fileInput = $("#uploadFile")[0].files[0];
+                    let formData = new FormData();
+                    formData.append("uploadFile",fileInput);
+                    let response = await $.ajax({
+                        type:"post",
+                        url:"/attachment",
+                        data:formData,
+                        contentType: false,
+                        processData: false
+                    });
 
-                let data = {
-                    userid:user.userid,
-                    explanation:explain,
-                    savepath : response.savepath ,
-                    ordinaryname : response.originalname };
+                    data = {
+                        userid:user.userid,
+                        explanation:explain,
+                        savepath : response.savepath ,
+                        ordinaryname : response.originalname };
+                }
 
                 let responses = await $.ajax({
                     url: '/addcmt',
@@ -291,17 +299,17 @@
                     data:JSON.stringify(data)
                 });
 
+
                 let upload = await $.get('/download/content/' + responses.id);
 
                 addLine(responses);
-
-                // $("#img_"+responses.id).attr("src","http://localhost:8080/download/"+ responses.id);
                 CloseWrite();
 
 
 
                 console.log(JSON.stringify(responses));
             }catch (e) {
+                alert("사진을 선택해주세요.");
                 console.log(JSON.stringify(e));
             }
         }
@@ -386,7 +394,6 @@
 
         function addLine(response) {
             let upload = $.get('/download/content/' + response.id);
-
             // response.reverse();
             $("#contents-list").prepend(
                 `<div id="line${response.id}" style="border-bottom: 1px solid silver;">
